@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Study Timer</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<div class="container">
+    <h1>Study Timer</h1>
+
+    <!-- Input Section -->
+    <div class="input-section">
+        <label>Study Time (minutes)</label><br>
+        <input type="number" id="studyTime" placeholder="Enter study time"><br>
+
+        <label>Break Time (minutes)</label><br>
+        <input type="number" id="breakTime" placeholder="Enter break time"><br>
+
+        <label>Number of Sessions</label><br>
+        <input type="number" id="sessions" placeholder="Enter sessions"><br>
+
+        <button onclick="startTimer()">Start</button>
+        <button onclick="togglePause()" id="pauseBtn">Pause</button>
+        <button onclick="resetTimer()">Reset</button>
+    </div>
+
+    <!-- Display Section -->
+    <div class="display-section">
+        <h2 id="sessionDisplay">Session: 0</h2>
+        <h1 id="timerDisplay">00:00</h1>
+        <p id="statusDisplay">Waiting to start...</p>
+    </div>
+
+    <!-- Session History -->
+    <div class="history-section">
+        <h3>Session History</h3>
+        <ul id="historyList"></ul>
+    </div>
+</div>
+
+<script>
+let studySeconds = 0;
+let breakSeconds = 0;
+let totalSessions = 0;
+let currentSession = 0;
+let timerInterval = null;
+let isPaused = false;
+let currentMode = "study";
+let remainingSeconds = 0;
+
+// Start Timer
+function startTimer() {
+    studySeconds = parseInt(document.getElementById("studyTime").value) * 60;
+    breakSeconds = parseInt(document.getElementById("breakTime").value) * 60;
+    totalSessions = parseInt(document.getElementById("sessions").value);
+
+    if (isNaN(studySeconds) || isNaN(breakSeconds) || isNaN(totalSessions)) {
+        alert("Please enter valid numbers");
+        return;
+    }
+
+    currentSession = 1;
+    currentMode = "study";
+    remainingSeconds = studySeconds;
+
+    document.getElementById("sessionDisplay").innerText = 
+        "Session: " + currentSession;
+
+    runCountdown();
+}
+
+// Countdown Logic
+function runCountdown() {
+    clearInterval(timerInterval);
+
+    timerInterval = setInterval(() => {
+        if (!isPaused) {
+            let mins = Math.floor(remainingSeconds / 60);
+            let secs = remainingSeconds % 60;
+
+            document.getElementById("timerDisplay").innerText =
+                (mins < 10 ? "0" : "") + mins + ":" +
+                (secs < 10 ? "0" : "") + secs;
+
+            document.getElementById("statusDisplay").innerText =
+                currentMode === "study" ? "Study Time" : "Break Time";
+
+            remainingSeconds--;
+
+            if (remainingSeconds < 0) {
+                clearInterval(timerInterval);
+                switchMode();
+            }
+        }
+    }, 1000);
+}
+
+// Switch Mode
+function switchMode() {
+    if (currentMode === "study") {
+        currentMode = "break";
+        remainingSeconds = breakSeconds;
+        runCountdown();
+    } else {
+        if (currentSession < totalSessions) {
+            currentSession++;
+            document.getElementById("sessionDisplay").innerText =
+                "Session: " + currentSession;
+
+            currentMode = "study";
+            remainingSeconds = studySeconds;
+            runCountdown();
+        } else {
+            document.getElementById("statusDisplay").innerText =
+                "All Sessions Completed 🎉";
+            document.getElementById("timerDisplay").innerText = "00:00";
+            saveSession();
+        }
+    }
+}
+
+// Pause / Resume
+function togglePause() {
+    isPaused = !isPaused;
+    document.getElementById("pauseBtn").innerText =
+        isPaused ? "Resume" : "Pause";
+}
+
+// Reset
+function resetTimer() {
+    clearInterval(timerInterval);
+    document.getElementById("timerDisplay").innerText = "00:00";
+    document.getElementById("statusDisplay").innerText = "Waiting to start...";
+    document.getElementById("sessionDisplay").innerText = "Session: 0";
+    document.getElementById("pauseBtn").innerText = "Pause";
+    isPaused = false;
+}
+
+// Save Session (Frontend only)
+function saveSession() {
+    const historyList = document.getElementById("historyList");
+
+    const li = document.createElement("li");
+    li.innerText = `
+        Study ${studySeconds/60} min | 
+        Break ${breakSeconds/60} min | 
+        Sessions ${totalSessions} | 
+        ${new Date().toLocaleString()}
+    `;
+
+    historyList.appendChild(li);
+}
+</script>
+
+</body>
+</html>
